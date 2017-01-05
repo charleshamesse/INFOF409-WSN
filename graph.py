@@ -64,25 +64,34 @@ class Graph:
         :param d: degree
         :return: tuple with nodes, graph and radius
         '''
+        i = 0
         while True: # Somehow always finishes
+            print i
+            i += 1
             (nodes, graph, r) = self.randomGraph(n, p)
             degree = self.getAverageDegree(graph)
-            if degree == d:
+            connected = self.connected(graph, 0)
+            if degree == d and connected:
                 return (nodes, graph, r)
 
-    def path(self, graph, i, j):
-        if graph[i][j] == 1:
-            return True
-        else:
-            for k in range(graph):
-                if ((self.path(graph(i, k)) == 1) and (self.path(graph(k, j)) == 1)):
-                    return True
+    def path(self, graph, i, j, visited_nodes):
+        if visited_nodes[i] != 1:
+            visited_nodes[i] = 1
+            if graph[i][j] == 1:
+                return True
+            else:
+                for k in range(len(graph)):
+                    if ((self.path(graph,i, k, visited_nodes) == 1) and (self.path(graph, k, j, visited_nodes) == 1)):
+                        return True
         return False
 
     def connected(self, graph, sink):
-        for i in range(graph):
-            if ((i != sink) and (not self.path(graph(i, sink)))):
+        print graph
+        '''
+        for i in range(len(graph)):
+            if i != sink and not self.path(graph, i, sink, visited_nodes):
                 return False
+        '''
         return True
 
     def get_sink(self):
