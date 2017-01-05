@@ -1,6 +1,7 @@
 import sys, random
 import numpy as np
 from action import Action
+from battery import Battery
 
 STATES = ['SLEEP', 'AWAKE', 'RTC_WAIT', 'CTS_WAIT']
 SLEEPS = np.arange(0, 110, 10)
@@ -15,6 +16,7 @@ class Node(object):
         self.is_sink = False
         self.hop = sys.maxint
         self.neighbours = []
+        self.battery = Battery()
 
 
         # Behaviour

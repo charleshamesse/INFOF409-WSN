@@ -1,6 +1,6 @@
 import sys
 
-DEBUG = False
+DEBUG = True
 
 def cout(m):
     if DEBUG:
@@ -17,5 +17,5 @@ class Action:
         return self.name + ': starting at t = ' + str(self.time)
 
     def execute(self):
-        cout('Executing' + self.describe())
+        cout('Executing ' + self.describe())
         return self.callback
