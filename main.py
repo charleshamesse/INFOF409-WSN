@@ -25,6 +25,8 @@ def main():
 
     cout(['node ' + str(n.n) + ', neighbours: ' + str(len(n.neighbours)) + ', hop:' + str(n.hop) for n in graph.get_nodes()])
 
+    for n in graph.get_nodes():
+        print n.battery.battery
 
     # Processing
     cout('Starting simulation...')
@@ -46,6 +48,10 @@ def main():
                 for n in graph.get_nodes():
                     n.update(t)
                 t += 1
+
+            # Compute EE
+            for n in graph.get_nodes():
+                n.compute_ee(t)
 
                 # delay?
 

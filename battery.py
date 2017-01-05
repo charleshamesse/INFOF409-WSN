@@ -14,5 +14,5 @@ class Battery:
     def __init__(self):
         self.battery = 1
 
-    def execute(self, action):
+    def account(self, action):
         self.battery = self.battery - ACTIONS[action]

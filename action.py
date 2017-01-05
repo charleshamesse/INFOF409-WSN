@@ -1,6 +1,6 @@
 import sys
 
-DEBUG = True
+DEBUG = False
 
 def cout(m):
     if DEBUG:
@@ -18,4 +18,4 @@ class Action:
 
     def execute(self):
         cout('Executing ' + self.describe())
-        return self.callback
+        return self.callback()
