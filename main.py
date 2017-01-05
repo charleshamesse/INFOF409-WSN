@@ -32,12 +32,12 @@ def main():
     for w in range(SIMULATION_LENGTH):
         # Learn
         for n in graph.get_nodes():
-            n.learn()
+            n.learn(t)
 
         for f in range(WINDOW_LENGTH):
             # Schedule sleep
             for n in graph.get_nodes():
-                n.schedule_sleep()
+                n.schedule_sleep(t)
 
             for i in range(FRAME_LENGTH):
                 # Update nodes

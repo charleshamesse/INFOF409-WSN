@@ -1,5 +1,6 @@
-import sys
+import sys, random
 import numpy as np
+from action import Action
 
 STATES = ['sleep', 'awake', 'rtc_wait', 'cts_wait']
 SLEEPS = np.arange(0, 110, 10)
@@ -18,8 +19,7 @@ class Node(object):
         # Behaviour
         self.state = None
         self.sensors = 0
-        self.sleep_offset = -1
-        self.sleep_counter = -1
+        self.duty_cycle = 0.5
 
 
         self.pending_actions = []
@@ -47,34 +47,31 @@ class Node(object):
             for n in self.neighbours:
                 n.update_hop(hop+1)
 
-    def learn(self):
+    def learn(self, t):
         return True
 
-    def schedule_sleep(self):
+    def schedule_sleep(self, t):
+        FRAME_LENGTH = 100 # to-do: get it from main
+
+        actions = []
+        rand = random.randint(0, FRAME_LENGTH)
+        sleep_time = FRAME_LENGTH * self.duty_cycle
+
+        start_time = t + rand
+        end_time = t + (rand+sleep_time)%FRAME_LENGTH
+        actions.append(Action('SLEEP', start_time))
+        actions.append(Action('WAKE', end_time))
+
+        # If non compact
+        if end_time < start_time:
+            actions.append(Action('SLEEP', t))
+            actions.append(Action('WAKE', t+FRAME_LENGTH-1))
+
+
+        for a in actions:
+            print a.describe()
+
         return True
 
     def update(self, t):
         print 'updating node ' + str(self.n) + ', time:' + str(t)
-'''
-    def update_states(self):
-        if self.state == 'sleep':
-            #
-            self.sleep_counter -= 1
-            if self.sleep_counter == 0:
-                self.state = 'awake'
-
-
-        if self.state == 'awake':
-            #
-
-        if self.state == 'rtc_wait':
-            #
-        if self.state == 'cts_wait':
-            #
-
-
-def requestToSend(self, node):
-    for i in range(n):
-        if incidenceMatrix[node][i] == 1:
-            node.queue = 0
-'''
