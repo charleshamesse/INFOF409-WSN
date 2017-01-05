@@ -1,10 +1,14 @@
+import sys
+
 class Node:
-    def __init__(self, x, y):
+    def __init__(self, n, x, y):
         # Position
+        self.n = n
         self.x = x
         self.y = y
         self.is_sink = False
-        self.hop = 0
+        self.hop = sys.maxint
+        self.neighbours = []
 
         # Behaviour
         self.active = True
@@ -19,7 +23,11 @@ class Node:
     def make_sink(self):
         self.is_sink = True
 
-
+    def update_hop(self, hop):
+        if hop < self.hop:
+            self.hop = hop
+            for n in self.neighbours:
+                n.update_hop(hop+1)
 
 '''
 def requestToSend(self, node):
