@@ -11,6 +11,7 @@ class Action:
     def __init__(self, name, time, callback):
         self.name = name
         self.time = time
+        self.priority = 0 # for further use ?
         self.callback = callback
 
     def describe(self):

@@ -1,11 +1,11 @@
-import time, sys, random
-import numpy as np
-from node import Node
 from graph import Graph
 
 SIMULATION_LENGTH = 2
 WINDOW_LENGTH = 4
-FRAME_LENGTH = 10
+FRAME_LENGTH = 100
+NODES = 20
+DEGREE = 4
+DISCRETISATION = 10 ** 16
 
 DEBUG = True
 
@@ -20,7 +20,7 @@ def main():
     First, generate the graph. The routing (assigning hop values) is already done during the graph generation.
     '''
     cout('Generating graph..')
-    graph = Graph(10, 10 ** 12, 4)
+    graph = Graph(NODES, DISCRETISATION, DEGREE)
     t = 0
 
     cout(['node ' + str(n.n) + ', neighbours: ' + str(len(n.neighbours)) + ', hop:' + str(n.hop) for n in graph.get_nodes()])
@@ -37,16 +37,18 @@ def main():
             n.learn(t)
 
         for f in range(WINDOW_LENGTH):
+
+            print t
             cout('FRAME')
             # Schedule sleep
             for n in graph.get_nodes():
-                n.schedule_sleep(t)
+                n.schedule_frame(t)
 
             for i in range(FRAME_LENGTH):
-                print t
                 # Update nodes
                 for n in graph.get_nodes():
                     n.update(t)
+
                 t += 1
 
             # Compute EE

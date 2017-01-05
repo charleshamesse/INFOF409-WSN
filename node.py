@@ -6,9 +6,12 @@ from battery import Battery
 DEBUG = False
 
 STATES = ['SLEEP', 'AWAKE']
-SLEEPS = np.arange(0, 110, 10)
 WEIGHTS = [0.2, 0.3, 0.1, 0.3, 0.1]
 LEARNING_RATE = 0.28
+MAX_TRIES = 3
+MESSAGE_WEIGHT = 1
+DUTY_CYCLES = np.arange(0,1.1,0.1)
+MODE = 'RAND' # 'RL' #or
 
 class Node(object):
     def __init__(self, n, x, y):
@@ -24,19 +27,22 @@ class Node(object):
 
         # Behaviour
         self.state = 'SLEEP'
-        self.sensors = 0
-        self.duty_cycle = random.uniform(0, 1.0)
-
-
+        self.messages_to_send = 0
+        self.duty_cycle = random.choice(DUTY_CYCLES)
         self.actions = {}
-        self.ongoing_actions = []
-        self.previous_actions = []
+        self.tries = 0
 
         # RL
         self.EE_log = []
         self.ESEE = None
 
-        self.sleep_probabilities = [1.0/len(SLEEPS)]*11
+        self.unsuccessful_transmissions = 0
+        self.successful_transmissions = 0
+        self.latency_log = []
+        self.messages_to_send_log = 0
+        self.awake_log = 0
+        self.sleep_log = 0
+
 
         self.IL = np.zeros(4)
         self.OH = np.zeros(4)
@@ -60,10 +66,20 @@ class Node(object):
         :param t:
         :return:
         '''
+        if MODE == 'RAND':
+            self.duty_cycle = 0.2 #random.choice(DUTY_CYCLES)
+        else: # RL
+            self.duty_cycle = 0 # To-do np.random.choice(3, 1, replace=False, p=[0.1, 0.8, 0.1])
+
         return True
 
-    def schedule_sleep(self, t):
-        FRAME_LENGTH = 10 # to-do: get it from main
+    def schedule_frame(self, t):
+        # Flush logs
+        # todo
+        self.awake_log =0
+        self.sleep_log =0
+
+        FRAME_LENGTH = 100 # to-do: get it from main
         actions = []
 
         # Time managment
@@ -81,12 +97,17 @@ class Node(object):
             actions.append(Action('SLEEP', t, self.start_sleeping))
             actions.append(Action('WAKE', t+FRAME_LENGTH-1, self.stop_sleeping))
 
+        # Sensors
+        temp = random.randint(0,99)
+        actions.append(Action('SENSE', t + temp, self.add_message))
+
         # Add actions to node
         for a in actions:
             if a.time not in self.actions.keys():
                 self.actions[a.time] = [a]
             else:
                 self.actions[a.time].append(a)
+
 
 
     def compute_ee(self, t):
@@ -104,7 +125,7 @@ class Node(object):
              WEIGHTS[2]*(1 - UT) + \
              WEIGHTS[3]*(1 - DQ) + \
              WEIGHTS[4]*self.battery.battery
-
+        print 'Activity log: ' + str(self.awake_log) + 'A / '+  str(self.sleep_log) + 'S'
         print 'Node ' + str(self.n) + '\tEOF \tBattery=' + str(self.battery.battery)  +'\tEE = ' + str(EE)
 
     def update(self, t):
@@ -115,14 +136,28 @@ class Node(object):
         :return:
         '''
         self.battery.account(self.state)
-        #print self.state
+
+        # Check if there's an action
         if t in self.actions.keys():
             for action in self.actions[t]:
                 action.execute()
 
-        #print 'updating node ' + str(self.n) + ', time:' + str(t)
+        # Check if there are messages to send
+        if self.state is 'AWAKE':
+            self.awake_log += 1
+            if self.messages_to_send > 0:
+                self.send_message(t)
+        else:
+            self.sleep_log += 1
+
 
     # Actions
+    def add_action(self, a):
+        if a.time not in self.actions.keys():
+            self.actions[a.time] = [a]
+        else:
+            self.actions[a.time].append(a)
+
     def start_sleeping(self):
         self.state = 'SLEEP'
         return True
@@ -130,3 +165,70 @@ class Node(object):
     def stop_sleeping(self):
         self.state = 'AWAKE'
         return True
+
+    def add_message(self):
+        self.messages_to_send += 1
+        self.messages_to_send_log += 1
+        return True
+
+    def send_message(self, t):
+        # Get awake neighbours
+        self.battery.account('TX') # RTS emission
+        awake_neighbours = []
+        for neighbour in self.neighbours:
+            if neighbour.state == 'AWAKE':
+                neighbour.battery.account('RX')  # RTS reception
+                # If neighbour is further away, put it to sleep
+                if neighbour.hop >= self.hop:
+                    temp = False
+                    neighbour.add_action(Action('SLEEP', t + 1, self.start_sleeping))
+                    for k in range(1, 4):
+                        if t+k in neighbour.actions.keys():
+                            for a in neighbour.actions[t + k]:
+                                if a.name in ['SLEEP']:
+                                    temp = True
+                                    print 'Sleeping programmed'
+                                    print (a.describe(), t)
+                    if temp == False:
+                        neighbour.add_action(Action('WAKE', t + 3, self.stop_sleeping))
+
+                else:
+                    awake_neighbours.append(neighbour)
+
+        # If there isn't any neighbour awake, do it again
+        if awake_neighbours == []:
+            if self.tries < MAX_TRIES:
+                self.tries += 1
+            # Else message is lost
+            else:
+                self.messages_to_send -= 1
+                self.tries = 0
+                self.latency_log.append(self.tries)
+                self.unsuccessful_transmissions += 1
+
+        # There's some node to send the message
+        else:
+            self.battery.account('RX') # CTS coming back
+            receiver = random.choice(awake_neighbours) #random.randint(0, len(awake_neighbours)-1)
+            receiver.messages_to_send += 1
+
+            # The receiving node pays a CTS emission
+            receiver.battery.account('TX')
+
+            # Everyone else pays a CTS reception
+            for neighbour in awake_neighbours:
+                if neighbour != receiver:
+                    neighbour.battery.account('RX')
+
+            # Now send the message, once for the message, twice for the EE
+            for x in range(MESSAGE_WEIGHT):
+                self.battery.account('TX')
+                receiver.battery.account('RX')
+
+            # Ack
+            receiver.battery.account('TX')
+            self.battery.account('RX')
+
+            self.messages_to_send -= 1
+            self.latency_log.append(self.tries)
+            self.tries = 0
