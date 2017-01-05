@@ -5,3 +5,11 @@ class Node:
         self.hop = None
         self.state = "active"
         #self.queue = #dictionnary
+
+
+'''
+def requestToSend(self, node):
+    for i in range(n):
+        if incidenceMatrix[node][i] == 1:
+            node.queue = 0
+'''
