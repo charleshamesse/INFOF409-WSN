@@ -1,6 +1,8 @@
 import random
 from math import sqrt
 from math import pi
+from node import Node
+from network import Network
 
 # getGraph(n, p) returns a tuple (x,y, z) where :
 # x = list of n random nodes coordinates in a 1x1 grid with discretisation level p
@@ -10,12 +12,10 @@ from math import pi
 
 # what matters is the quotient between the length of one side of the square and the radius of emission r
 
-def randomGraph(n, p): # n = number of nodes (10 or 50)
-                       # p = pas de discrétisation : abscisse/ordonnées 0->p
+def randomGraph(n, p):
   nodes = [] # randomly distributed node coordinates list
   for i in range(n):
-    nodes.append(node(random.randint(0,p)/p, random.randint(0,p)/p)) # p = discretisation level
-                                                                 # i.e. (abscisse : 0,1/p,2/p,...,p/p = 1, ordonnée 0,1/p,2/p,...,p/p = 1)
+    nodes.append(Node(random.randint(0,p)/p, random.randint(0,p)/p)) # p = discretisation level
 
   graph = [] # representation of the graph as a triangular matrix
   for i in range(n):
@@ -25,15 +25,15 @@ def randomGraph(n, p): # n = number of nodes (10 or 50)
     graph.append(row)
 
   r = sqrt(4/(n*pi)) # optimisation : the radius should be approximately this value
-                     #                because pi*n*r^2 = 4 (average degree of a node)
+  # because pi*n*r^2 = 4 (average degree of a node)
 
   for i in range(n):
     for j in range(n):
-		if i == j:
-			graph[i][j] = 1
+        if i == j:
+            graph[i][j] = 1
         elif ( (sqrt((nodes[i][0]-nodes[j][0])**2 + (nodes[i][1]-nodes[j][1])**2)) < r ):
             graph[i][j] = 1
-			graph[j][i] = 1
+            graph[j][i] = 1
   return (nodes, graph, r)
 
 def Sum(liste):
