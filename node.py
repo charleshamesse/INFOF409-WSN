@@ -1,10 +1,24 @@
 class Node:
     def __init__(self, x, y):
+        # Position
         self.x = x
         self.y = y
-        self.hop = None
-        self.state = "active"
-        #self.queue = #dictionnary
+        self.is_sink = False
+        self.hop = 0
+
+        # Behaviour
+        self.active = True
+        self.pending_actions = []
+        self.ongoing_actions = []
+        self.previous_actions = []
+
+        # RL
+        self.EE_log = []
+        self.probabilities = []
+
+    def make_sink(self):
+        self.is_sink = True
+
 
 
 '''

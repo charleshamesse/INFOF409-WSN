@@ -72,6 +72,21 @@ class Graph:
             if degree == d:
                 return (nodes, graph, r)
 
+    def path(self, graph, i, j):
+        if graph[i][j] == 1:
+            return True
+        else:
+            for k in range(graph):
+                if ((self.path(graph(i, k)) == 1) and (self.path(graph(k, j)) == 1)):
+                    return True
+        return False
+
+    def connected(self, graph, sink):
+        for i in range(graph):
+            if ((i != sink) and (not self.path(graph(i, sink)))):
+                return False
+        return True
+
     def test(self):
         print(self.getGraph(10, 10**16)) # python rounds up to ~16 decimals, so this is ~ the max discretisation
         print(self.getGraph(50, 10**16))
