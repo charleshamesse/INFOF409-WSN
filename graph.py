@@ -13,8 +13,8 @@ import numpy as np
 # what matters is the quotient between the length of one side of the square and the radius of emission r
 class Graph:
 
-    def __init__(self, n):
-        (self.nodes, self.incidenceMatrix, self.range) = self.getGraph(n, 10 ** 16)
+    def __init__(self, n, p, d):
+        (self.nodes, self.incidenceMatrix, self.range) = self.getGraph(n, p, d)
 
     def randomGraph(self, n, p):
         '''
@@ -26,7 +26,7 @@ class Graph:
         # Create nodes
         nodes = []
         for i in range(n):
-            nodes.append(Node(random.randint(0,p)*1./p, random.randint(0,p)*1./p)) 
+            nodes.append(Node(random.randint(0,p)*1./p, random.randint(0,p)*1./p))
 
         # Define maximum adjacency radius
         r = sqrt(4/(n*pi)) # Radius should be approximately this value, because pi*n*r^2 = 4 (average degree of a node)
