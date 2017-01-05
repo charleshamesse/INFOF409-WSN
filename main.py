@@ -16,15 +16,14 @@ def cout(m):
 
 def main():
 
-    # Init
-    graph = Graph(10, 10 ** 16, 4)
+    '''
+    First, generate the graph. The routing (assigning hop values) is already done during the graph generation.
+    '''
+    cout('Generating graph..')
+    graph = Graph(40, 10 ** 12, 4)
     t = 0
 
-    # Routing
-    sink = graph.get_sink()
-    sink.update_hop(0)
-
-    print graph.incidenceMatrix
+    # print graph.incidenceMatrix
 
     for n in graph.get_nodes():
         print ('node ' + str(n.n) + ', neighbours: ' + str(len(n.neighbours)) + ', hop:' + str(n.hop))

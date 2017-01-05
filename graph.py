@@ -1,4 +1,4 @@
-import random
+import random, sys
 from math import sqrt
 from math import pi
 from node import Node
@@ -64,35 +64,25 @@ class Graph:
         :param d: degree
         :return: tuple with nodes, graph and radius
         '''
-        i = 0
         while True: # Somehow always finishes
-            print i
-            i += 1
-            (nodes, graph, r) = self.randomGraph(n, p)
+            # Generate graph
+            (current_nodes, graph, r) = self.randomGraph(n, p)
+
+            # Check the degree
             degree = self.getAverageDegree(graph)
-            connected = self.connected(graph, 0)
+
+            # Check if the graph is connected
+            current_nodes[0].update_hop(0)
+            connected = True
+            for i in range(len(current_nodes)):
+                if current_nodes[i].hop is sys.maxint:
+                    connected = False
+
+            # Return if both checks are okay
             if degree == d and connected:
-                return (nodes, graph, r)
+                return (current_nodes, graph, r)
 
-    def path(self, graph, i, j, visited_nodes):
-        if visited_nodes[i] != 1:
-            visited_nodes[i] = 1
-            if graph[i][j] == 1:
-                return True
-            else:
-                for k in range(len(graph)):
-                    if ((self.path(graph,i, k, visited_nodes) == 1) and (self.path(graph, k, j, visited_nodes) == 1)):
-                        return True
-        return False
 
-    def connected(self, graph, sink):
-        print graph
-        '''
-        for i in range(len(graph)):
-            if i != sink and not self.path(graph, i, sink, visited_nodes):
-                return False
-        '''
-        return True
 
     def get_sink(self):
         return self.sink
