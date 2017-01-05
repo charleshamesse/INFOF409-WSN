@@ -4,6 +4,8 @@ from node import Node
 from graph import Graph
 
 
+SIMULATION_SECONDS = 20
+
 def main():
     print('yo')
 
@@ -11,5 +13,12 @@ def main():
 
     print graph
 
+    for s in range(SIMULATION_SECONDS):
+        # subdivise - frame window
+        # subdivise - frame
+        # s
+            # call all nodes - update
+        # delay
+        
 if __name__ == '__main__':
     main()
