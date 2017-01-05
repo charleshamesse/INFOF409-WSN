@@ -17,14 +17,21 @@ class Graph:
         (self.nodes, self.incidenceMatrix, self.range) = self.getGraph(n, 10 ** 16)
 
     def randomGraph(self, n, p):
-        nodes = [] # randomly distributed node coordinates list
+        '''
+        Makes a random graph
+        :param n: number of nodes
+        :param p: discretisation level
+        :return: tuple with nodes, graph and radius
+        '''
+        # Create nodes
+        nodes = []
         for i in range(n):
-            nodes.append(Node(random.randint(0,p)*1./p, random.randint(0,p)*1./p)) # p = discretisation level
+            nodes.append(Node(random.randint(0,p)*1./p, random.randint(0,p)*1./p)) 
 
-        r = sqrt(4/(n*pi)) # optimisation : the radius should be approximately this value
-        # because pi*n*r^2 = 4 (average degree of a node)
+        # Define maximum adjacency radius
+        r = sqrt(4/(n*pi)) # Radius should be approximately this value, because pi*n*r^2 = 4 (average degree of a node)
 
-        # incidence matrix
+        # Compute incidence matrix
         graph = np.zeros((n,n))
         for i in range(n):
           for j in range(n):
@@ -37,19 +44,32 @@ class Graph:
 
 
     def getAverageDegree(self, graph):
+        '''
+        Gets the average degree of a graph
+        :param graph:
+        :return:
+        '''
         n = len(graph) # number of nodes
         res = 0
         for i in range(n):
             res += np.sum(graph[i])
         print res
-        return 2*res/n  # 2* nbr d'aretes = somme des degres # on divise par n pour faire la moyenne
+        # 2* nbr d'aretes = somme des degres # on divise par n pour faire la moyenne
+        return 2*res/n
 
-    def getGraph(self, n, p): #n = number of vertexes, p = pas de discretisation
-        while True: # could be infinite loop but always finish
+    def getGraph(self, n, p, d):
+        '''
+        Returns a graph on n nodes, discretisation level p and average degree d
+        :param n: number of nodes
+        :param p: discretisation level
+        :param d: degree
+        :return: tuple with nodes, graph and radius
+        '''
+        while True: # Somehow always finishes
             (nodes, graph, r) = self.randomGraph(n, p)
-            d = self.getAverageDegree(graph)
+            degree = self.getAverageDegree(graph)
             print(d)
-            if d == 4.0:
+            if degree == d:
                 return (nodes, graph, r)
 
     def test(self):
