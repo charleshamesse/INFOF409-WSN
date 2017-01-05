@@ -23,27 +23,30 @@ def main():
     graph = Graph(10, 10 ** 12, 4)
     t = 0
 
-    for n in graph.get_nodes():
-        print ('node ' + str(n.n) + ', neighbours: ' + str(len(n.neighbours)) + ', hop:' + str(n.hop))
+    cout(['node ' + str(n.n) + ', neighbours: ' + str(len(n.neighbours)) + ', hop:' + str(n.hop) for n in graph.get_nodes()])
 
 
     # Processing
     cout('Starting simulation...')
     for w in range(SIMULATION_LENGTH):
+        cout('WINDOW')
         # Learn
         for n in graph.get_nodes():
             n.learn(t)
 
         for f in range(WINDOW_LENGTH):
+            cout('FRAME')
             # Schedule sleep
             for n in graph.get_nodes():
                 n.schedule_sleep(t)
 
             for i in range(FRAME_LENGTH):
+                print t
                 # Update nodes
                 for n in graph.get_nodes():
                     n.update(t)
                 t += 1
+
                 # delay?
 
     cout('End of simulation.')

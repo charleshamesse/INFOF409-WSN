@@ -2,8 +2,9 @@ import sys, random
 import numpy as np
 from action import Action
 
-STATES = ['sleep', 'awake', 'rtc_wait', 'cts_wait']
+STATES = ['SLEEP', 'AWAKE', 'RTC_WAIT', 'CTS_WAIT']
 SLEEPS = np.arange(0, 110, 10)
+DEBUG = False
 
 class Node(object):
     def __init__(self, n, x, y):
@@ -22,7 +23,7 @@ class Node(object):
         self.duty_cycle = 0.5
 
 
-        self.pending_actions = []
+        self.actions = {}
         self.ongoing_actions = []
         self.previous_actions = []
 
@@ -51,27 +52,49 @@ class Node(object):
         return True
 
     def schedule_sleep(self, t):
-        FRAME_LENGTH = 100 # to-do: get it from main
 
+        FRAME_LENGTH = 10 # to-do: get it from main
         actions = []
+
+        # Time managment
         rand = random.randint(0, FRAME_LENGTH)
         sleep_time = FRAME_LENGTH * self.duty_cycle
+        start_time = int(t + rand)
+        end_time = int(t + (rand+sleep_time)%FRAME_LENGTH)
 
-        start_time = t + rand
-        end_time = t + (rand+sleep_time)%FRAME_LENGTH
-        actions.append(Action('SLEEP', start_time))
-        actions.append(Action('WAKE', end_time))
+        # Actions
+        actions.append(Action('SLEEP', start_time, self.start_sleeping()))
+        actions.append(Action('WAKE', end_time, self.stop_sleeping()))
 
-        # If non compact
+        # Actions - if non compact
         if end_time < start_time:
-            actions.append(Action('SLEEP', t))
-            actions.append(Action('WAKE', t+FRAME_LENGTH-1))
+            actions.append(Action('SLEEP', t, self.start_sleeping()))
+            actions.append(Action('WAKE', t+FRAME_LENGTH-1, self.stop_sleeping()))
 
-
+        # Add actions to node
         for a in actions:
-            print a.describe()
-
-        return True
+            if a.time not in self.actions.keys():
+                self.actions[a.time] = [a]
+            else:
+                self.actions[a.time].append(a)
 
     def update(self, t):
-        print 'updating node ' + str(self.n) + ', time:' + str(t)
+        '''
+        Watch out: self.actions[t] is a list
+        :param t:
+        :return:
+        '''
+        if t in self.actions.keys():
+            for action in self.actions[t]:
+                action.execute()
+
+        #print 'updating node ' + str(self.n) + ', time:' + str(t)
+
+    # Actions
+    def start_sleeping(self):
+        self.state = 'SLEEP'
+        return True
+
+    def stop_sleeping(self):
+        self.state = 'AWAKE'
+        return True
