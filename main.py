@@ -3,7 +3,7 @@ import numpy as np
 from node import Node
 from graph import Graph
 
-SIMULATION_LENGTH = 10
+SIMULATION_LENGTH = 2
 WINDOW_LENGTH = 4
 FRAME_LENGTH = 10
 
@@ -20,10 +20,8 @@ def main():
     First, generate the graph. The routing (assigning hop values) is already done during the graph generation.
     '''
     cout('Generating graph..')
-    graph = Graph(40, 10 ** 12, 4)
+    graph = Graph(10, 10 ** 12, 4)
     t = 0
-
-    # print graph.incidenceMatrix
 
     for n in graph.get_nodes():
         print ('node ' + str(n.n) + ', neighbours: ' + str(len(n.neighbours)) + ', hop:' + str(n.hop))
@@ -32,12 +30,21 @@ def main():
     # Processing
     cout('Starting simulation...')
     for w in range(SIMULATION_LENGTH):
+        # Learn
+        for n in graph.get_nodes():
+            n.learn()
+
         for f in range(WINDOW_LENGTH):
+            # Schedule sleep
+            for n in graph.get_nodes():
+                n.schedule_sleep()
+
             for i in range(FRAME_LENGTH):
-                #print t
+                # Update nodes
+                for n in graph.get_nodes():
+                    n.update(t)
                 t += 1
-                # call all nodes - update
-            # delay?
+                # delay?
 
     cout('End of simulation.')
 

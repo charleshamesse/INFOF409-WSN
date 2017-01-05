@@ -29,6 +29,15 @@ class Node:
             for n in self.neighbours:
                 n.update_hop(hop+1)
 
+    def learn(self):
+        return True
+
+    def schedule_sleep(self):
+        return True
+
+    def update(self, t):
+        print 'updating node ' + str(self.n) + ', time:' + str(t)
+
 '''
 def requestToSend(self, node):
     for i in range(n):

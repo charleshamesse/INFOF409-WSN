@@ -82,8 +82,6 @@ class Graph:
             if degree == d and connected:
                 return (current_nodes, graph, r)
 
-
-
     def get_sink(self):
         return self.sink
 
