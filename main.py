@@ -65,18 +65,19 @@ def main():
     mean = []
         #print 'Node ' +  str(n.n) + '\t Last action:' + str(n.current_action)
         #print n.ESEE_log
-
-    for n in graph.get_nodes():
-        plt.plot(n.ESEE_log)
-    #for s in range(SIMULATION_LENGTH-10):
+    for s in range(SIMULATION_LENGTH-12):
         #mean.append(0)
-        #for n in graph.get_nodes():
-        #    mean[s] +=  n.ESEE_log[s]
-        #mean[s] /= NODES
         #plt.plot( np.arange(len(n.probabilities)), [1.0/11]*11)
-        #plt.plot( np.arange(len(n.probabilities)), n.probabilities)
-    #plt.plot(mean)
-    plt.xlabel('RL')
+        for n in graph.get_nodes():
+           plt.subplot(3,1,1)
+           plt.plot(n.ESEE_log)
+           #print n.ESEE_log
+           if n.n == 1:
+               plt.subplot(3,1,2).set_ylim([0, 1])
+               plt.plot(n.DQ)
+               plt.subplot(3,1,3).set_ylim([0, 1])
+               plt.plot(n.IL)
+    plt.xlabel('RL _')
     plt.show()
 
 if __name__ == '__main__':
