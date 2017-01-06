@@ -2,17 +2,18 @@ import sys, random
 import numpy as np
 from action import Action
 from battery import Battery
+from message import Message
 
 DEBUG = False
 
 STATES = ['SLEEP', 'AWAKE']
-WEIGHTS = [0, 0, 0, 1, 0]
+WEIGHTS = [0.2, 0.2, 0.2, 0.2, 0.0]
 #IDLE_LSITENING - OVERHEQRING - UNSECCESS -QUEUE - BQTREYRE
-LEARNING_RATE = 0.28
+LEARNING_RATE = 0.2
 MAX_TRIES = 3
 MESSAGE_WEIGHT = 1
 DUTY_CYCLES = np.arange(0,1.1,0.1)
-MODE = 'RANDOM'#'RAND' # 'RL' #or
+MODE = 'RL'#'RAND' # 'RL' #or
 
 class Node(object):
     def __init__(self, n, x, y):
@@ -28,7 +29,8 @@ class Node(object):
 
         # Behaviour
         self.state = 'SLEEP'
-        self.messages_to_send = 0
+        self.messages_to_send = []
+        self.number_messages_to_send = 0
         self.messages_to_send_log = 0
         self.current_action = random.randint(0,10)
         self.duty_cycle = DUTY_CYCLES[self.current_action]
@@ -46,6 +48,7 @@ class Node(object):
         self.latency_log = 0 # sum of durations each packets passed in the queue
         self.idle_listening = 0
         self.messages_to_send_log_total = 0
+        self.successful_transmissions_log_total = 0
         self.awake_log = 0
         self.sleep_log = 0
 
@@ -101,14 +104,14 @@ class Node(object):
                     if a != self.current_action:
                         self.probabilities[a] -= LEARNING_RATE * ESEE * self.probabilities[a]
 
-            if self.n == 0:
-                print self.probabilities
+            #if self.n == 0:
+            #    print self.probabilities
 
 
         if MODE == 'RAND':
             self.duty_cycle = 0.2 #random.choice(DUTY_CYCLES)
         else: # RL
-            self.current_action = np.random.choice(len(DUTY_CYCLES), 1, replace=False, p=self.probabilities)
+            self.current_action = np.random.choice(len(DUTY_CYCLES), 1, replace=False, p=self.probabilities)[0]
             self.duty_cycle = DUTY_CYCLES[self.current_action]
 
         if self.is_sink:
@@ -146,8 +149,10 @@ class Node(object):
             actions.append(Action('WAKE', t+FRAME_LENGTH-1, self.stop_sleeping))
 
         # Sensors
-        temp = random.randint(0,99)
-        actions.append(Action('SENSE', (t + temp), self.add_message))
+        number_of_messages = 1#random.randint(1,2)
+        for m in range(number_of_messages):
+            temp = random.randint(0,99)
+            actions.append(Action('SENSE', (t + temp), self.add_message))
 
         # Add actions to node
         for a in actions:
@@ -179,7 +184,7 @@ class Node(object):
         #print 'Activity log: ' + str(self.awake_log) + 'A / '+  str(self.sleep_log) + 'S'
         #print 'Node ' + str(self.n) + ':\t' + str(self.messages_to_send_log)
         #print 'Node ' + str(self.n) + '\tBattery=' + str(self.battery.battery)  +'\tEE = ' + str(EE)
-        #print (IL, OH, UT, DQ)
+        if self.n == 0: print ('Node', self.n, 'Time', t, IL, OH, UT, DQ, 'Action', self.current_action)
 
         self.EE_log.append(EE)
 
@@ -200,10 +205,10 @@ class Node(object):
         # Check if there are messages to send
         if self.state is 'AWAKE':
             self.awake_log += 1
-            if self.messages_to_send == 0:
+            if self.number_messages_to_send== 0:
                 self.idle_listening += 1
-            if self.messages_to_send > 0:
-                self.send_message(t)
+            if self.number_messages_to_send> 0:
+                self.send_message(t, self.messages_to_send[-1])
         else:
             self.sleep_log += 1
 
@@ -224,12 +229,14 @@ class Node(object):
         return True
 
     def add_message(self):
-        self.messages_to_send += 1
+        message = Message('MSG', self.n)
+        self.number_messages_to_send += 1
+        self.messages_to_send.append(message)
         self.messages_to_send_log += 1
         self.messages_to_send_log_total += 1
         return True
 
-    def send_message(self, t):
+    def send_message(self, t, m):
         # Get awake neighbours
         self.battery.account('TX') # RTS emission
         awake_neighbours = []
@@ -257,9 +264,11 @@ class Node(object):
                 self.tries += 1
             # Else message is lost
             else:
-                self.messages_to_send -= 1
+                self.number_messages_to_send-= 1
                 self.tries = 0
                 self.latency_log += self.tries
+                m.transfer('FAIL')
+                self.messages_to_send.remove(m)
                 self.unsuccessful_transmissions += 1
 
         # There's some node to send the message
@@ -267,7 +276,7 @@ class Node(object):
             self.battery.account('RX') # CTS coming back
             receiver = random.choice(awake_neighbours) #random.randint(0, len(awake_neighbours)-1)
             if not receiver.is_sink:
-                receiver.messages_to_send += 1
+                receiver.number_messages_to_send+= 1
             receiver.messages_to_send_log += 1
             receiver.messages_to_send_log_total += 1
 
@@ -288,7 +297,14 @@ class Node(object):
             receiver.battery.account('TX')
             self.battery.account('RX')
 
-            self.messages_to_send -= 1
+            self.number_messages_to_send-= 1
+            m.transfer(receiver.n)
+            receiver.messages_to_send.append(m)
+            self.messages_to_send.remove(m)
             self.successful_transmissions += 1
+            self.successful_transmissions_log_total +=1
             self.latency_log += self.tries
             self.tries = 0
+
+    def get_messages(self):
+        return self.messages_to_send

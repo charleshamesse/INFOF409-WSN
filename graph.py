@@ -4,6 +4,7 @@ from math import pi
 from node import Node
 import numpy as np
 
+import matplotlib.pyplot as plt
 class Graph:
 
     def __init__(self, n, p, d):
@@ -88,8 +89,21 @@ class Graph:
     def get_nodes(self):
         return self.nodes
 
-
-
     def test(self):
         print(self.get_graph(10, 10**16)) # python rounds up to ~16 decimals, so this is ~ the max discretisation
         print(self.get_graph(50, 10**16))
+
+    def plot_graph(self):
+        for Node in self.nodes:
+            if Node.hop == 0:
+                plt.scatter(Node.x, Node.y, marker='o', s=120, color='red')
+                plt.annotate('nbr : ' + str(Node.n), xy=(Node.x, Node.y + 0.01))
+                plt.annotate('hop : ' + str(Node.hop), xy=(Node.x, Node.y + 0.04))
+            else:
+                plt.scatter(Node.x, Node.y, marker='o', s=60, color='blue')
+                plt.annotate('nbr : ' + str(Node.n), xy=(Node.x, Node.y + 0.01))
+                plt.annotate('hop : ' + str(Node.hop), xy=(Node.x, Node.y + 0.04))
+        for Node in self.nodes:
+            for neighbour in Node.neighbours:
+                plt.plot([Node.x, neighbour.x], [Node.y, neighbour.y], color='black')
+        plt.show()
