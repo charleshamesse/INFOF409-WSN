@@ -6,13 +6,13 @@ from battery import Battery
 DEBUG = False
 
 STATES = ['SLEEP', 'AWAKE']
-WEIGHTS = [0, 0, 0, 1, 0]
+WEIGHTS = [0.2, 0.1, 0.1, 0.3, 0.3]
 #IDLE_LSITENING - OVERHEQRING - UNSECCESS -QUEUE - BQTREYRE
 LEARNING_RATE = 0.28
 MAX_TRIES = 3
 MESSAGE_WEIGHT = 1
 DUTY_CYCLES = np.arange(0,1.1,0.1)
-MODE = 'RANDOM'#'RAND' # 'RL' #or
+MODE = 'RL'#'RAND' # 'RL' #or
 
 class Node(object):
     def __init__(self, n, x, y):
@@ -50,10 +50,10 @@ class Node(object):
         self.sleep_log = 0
 
 
-        self.IL = np.zeros(4)
-        self.OH = np.zeros(4)
-        self.UT = np.zeros(4)
-        self.DQ = np.zeros(4)
+        self.IL = []
+        self.OH = []
+        self.UT = []
+        self.DQ = []
 
     def make_sink(self):
         self.is_sink = True
@@ -179,7 +179,13 @@ class Node(object):
         #print 'Activity log: ' + str(self.awake_log) + 'A / '+  str(self.sleep_log) + 'S'
         #print 'Node ' + str(self.n) + ':\t' + str(self.messages_to_send_log)
         #print 'Node ' + str(self.n) + '\tBattery=' + str(self.battery.battery)  +'\tEE = ' + str(EE)
-        #print (IL, OH, UT, DQ)
+        #if self.n == 10:
+        #    print (IL, OH, UT, DQ), 'Node'+str(self.n)
+        if t%4 == 0:
+            self.IL.append(IL)
+            self.OH.append(OH)
+            self.UT.append(UT)
+            self.DQ.append(DQ)
 
         self.EE_log.append(EE)
 
