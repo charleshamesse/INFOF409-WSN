@@ -2,7 +2,7 @@ from graph import Graph
 import matplotlib.pyplot as plt
 import numpy as np
 
-SIMULATION_LENGTH = 50
+SIMULATION_LENGTH = 30
 WINDOW_LENGTH = 4
 FRAME_LENGTH = 100
 NODES = 20
@@ -25,6 +25,7 @@ def main():
 
     cout(['node ' + str(n.n) + ', neighbours: ' + str(len(n.neighbours)) + ', hop:' + str(n.hop) for n in graph.get_nodes()])
 
+    graph.plot_graph()
 
     # Processing
     cout('Starting simulation...')
@@ -55,6 +56,11 @@ def main():
                 # delay?
 
     cout('End of simulation.')
+
+    for n in graph.get_nodes():
+        print 'Node ' + str(n.n) + ': ' + str(n.successful_transmissions_log_total) + '/' + str(n.messages_to_send_log_total)
+        for m in n.get_messages():
+            print m.describe()
 
     mean = []
         #print 'Node ' +  str(n.n) + '\t Last action:' + str(n.current_action)
