@@ -59,8 +59,9 @@ def main():
 
     for n in graph.get_nodes():
         print 'Node ' + str(n.n) + ': ' + str(n.successful_transmissions_log_total) + '/' + str(n.messages_to_send_log_total)
-        for m in n.get_messages():
-            print m.describe()
+        if n.hop >=4:
+            for m in n.get_messages():
+                    print m.describe()
 
     mean = []
         #print 'Node ' +  str(n.n) + '\t Last action:' + str(n.current_action)
@@ -72,7 +73,7 @@ def main():
            plt.subplot(3,1,1)
            plt.plot(n.ESEE_log)
            #print n.ESEE_log
-           if n.n == 1:
+           if n.n %3 == 0:
                plt.subplot(3,1,2).set_ylim([0, 1])
                plt.plot(n.DQ)
                plt.subplot(3,1,3).set_ylim([0, 1])
