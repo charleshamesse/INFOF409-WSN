@@ -81,6 +81,7 @@ class Graph:
 
             # Return if both checks are okay
             if degree == d and connected:
+                current_nodes[0].make_sink()
                 return (current_nodes, graph, r)
 
     def get_sink(self):

@@ -153,10 +153,11 @@ class Node(object):
             actions.append(Action('WAKE', t+FRAME_LENGTH-1, self.stop_sleeping))
 
         # Sensors
-        number_of_messages = 1#random.randint(1,2)
-        for m in range(number_of_messages):
-            temp = random.randint(0,99)
-            actions.append(Action('SENSE', (t + temp), self.add_message))
+        if not self.is_sink:
+            number_of_messages = 1#random.randint(1,2)
+            for m in range(number_of_messages):
+                temp = random.randint(0,99)
+                actions.append(Action('SENSE', (t + temp), self.add_message))
 
         # Add actions to node
         for a in actions:
@@ -172,7 +173,8 @@ class Node(object):
         :param t:
         :return:
         '''
-        IL = self.idle_listening*1. / self.awake_log #0.23345
+        denominator_0 = self.awake_log if self.awake_log > 0 else 1
+        IL = self.idle_listening*1. / denominator_0 #0.23345
         OH = 0.1  #0.1
         if (self.unsuccessful_transmissions + self.successful_transmissions) > 0:
             denominator = (self.unsuccessful_transmissions + self.successful_transmissions)
@@ -214,14 +216,23 @@ class Node(object):
                 action.execute()
 
         # Check if there are messages to send
-        if self.state is 'AWAKE':
-            self.awake_log += 1
-            if self.number_messages_to_send== 0:
-                self.idle_listening += 1
-            if self.number_messages_to_send> 0:
-                self.send_message(t, self.messages_to_send[-1])
+        if not self.is_sink:
+            if self.state is 'AWAKE':
+                self.awake_log += 1
+                messages_to_send_not_failed = [m for m in self.messages_to_send if not m.failed]
+                if len(messages_to_send_not_failed) == 0:
+                    self.idle_listening += 1
+                if len(messages_to_send_not_failed) > 0:
+                    self.send_message(t, messages_to_send_not_failed[-1])
+                    if self.n == 0:
+                        print 'STRESSSSS'
+            else:
+                self.sleep_log += 1
         else:
-            self.sleep_log += 1
+            messages_to_send_not_passed = [m for m in self.messages_to_send if not m.passed]
+            for m in messages_to_send_not_passed:
+                m.success()
+                m.transfer('SINK')
 
 
     # Actions
@@ -279,7 +290,7 @@ class Node(object):
                 self.tries = 0
                 self.latency_log += self.tries
                 m.transfer('FAIL')
-                self.messages_to_send.remove(m)
+                m.fail()
                 self.unsuccessful_transmissions += 1
 
         # There's some node to send the message
