@@ -6,12 +6,13 @@ from battery import Battery
 DEBUG = False
 
 STATES = ['SLEEP', 'AWAKE']
-WEIGHTS = [0.2, 0.3, 0.1, 0.3, 0.1]
+WEIGHTS = [0, 0, 0, 1, 0]
+#IDLE_LSITENING - OVERHEQRING - UNSECCESS -QUEUE - BQTREYRE
 LEARNING_RATE = 0.28
 MAX_TRIES = 3
 MESSAGE_WEIGHT = 1
 DUTY_CYCLES = np.arange(0,1.1,0.1)
-MODE = 'RL'#'RAND' # 'RL' #or
+MODE = 'RANDOM'#'RAND' # 'RL' #or
 
 class Node(object):
     def __init__(self, n, x, y):
@@ -94,17 +95,21 @@ class Node(object):
             self.ESEE_log.append(ESEE)
 
             # Update probabilities
-            self.probabilities[self.current_action] += LEARNING_RATE * ESEE * (1 -  self.probabilities[self.current_action])
-            for a in range(len(DUTY_CYCLES)):
-                if a != self.current_action:
-                    self.probabilities[a] -= LEARNING_RATE * ESEE * self.probabilities[a]
+            if MODE == 'RL':
+                self.probabilities[self.current_action] += LEARNING_RATE * ESEE * (1 -  self.probabilities[self.current_action])
+                for a in range(len(DUTY_CYCLES)):
+                    if a != self.current_action:
+                        self.probabilities[a] -= LEARNING_RATE * ESEE * self.probabilities[a]
+
+            if self.n == 0:
+                print self.probabilities
 
 
         if MODE == 'RAND':
             self.duty_cycle = 0.2 #random.choice(DUTY_CYCLES)
         else: # RL
             self.current_action = np.random.choice(len(DUTY_CYCLES), 1, replace=False, p=self.probabilities)
-            self.duty_cycle = DUTY_CYCLES[self.current_action] # To-do
+            self.duty_cycle = DUTY_CYCLES[self.current_action]
 
         if self.is_sink:
             self.duty_cycle = 1

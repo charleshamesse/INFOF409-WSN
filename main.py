@@ -1,7 +1,8 @@
 from graph import Graph
 import matplotlib.pyplot as plt
+import numpy as np
 
-SIMULATION_LENGTH = 100
+SIMULATION_LENGTH = 50
 WINDOW_LENGTH = 4
 FRAME_LENGTH = 100
 NODES = 20
@@ -54,11 +55,19 @@ def main():
                 # delay?
 
     cout('End of simulation.')
-    for n in graph.get_nodes():
+
+    mean = []
         #print 'Node ' +  str(n.n) + '\t Last action:' + str(n.current_action)
         #print n.ESEE_log
-        plt.plot(n.ESEE_log)
-    plt.xlabel('RL')
+    for s in range(SIMULATION_LENGTH-12):
+        mean.append(0)
+        for n in graph.get_nodes():
+            mean[s] +=  n.ESEE_log[s]
+        mean[s] /= NODES
+        #plt.plot( np.arange(len(n.probabilities)), [1.0/11]*11)
+        #plt.plot( np.arange(len(n.probabilities)), n.probabilities)
+    plt.plot(mean)
+    plt.xlabel('RANDOM, QUEUE')
     plt.show()
 
 if __name__ == '__main__':
