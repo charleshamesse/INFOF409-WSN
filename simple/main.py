@@ -6,19 +6,18 @@ from node import Node
 #
 DEBUG = False
 NODES = 20
-SIMULATIONS = 1
+SIMULATIONS = 10
 ITERATIONS = 100
 DO_SIM = True
 
 #
-nodes = []
 
 #
 def cout(m):
     if DEBUG:
         print(m)
 
-def get_node(n):
+def get_node(n, nodes):
     if n > -1:
         return nodes[n]
     else:
@@ -27,20 +26,24 @@ def get_node(n):
 def main():
     cout('Generate line')
 
-    for n in range(NODES):
-        #parent = n-1 if n-1 > -1 else None
-        node = Node(n)#, parent)
-        nodes.append(node)
+    results = np.zeros((SIMULATIONS, NODES))
 
 
     if DO_SIM:
         for s in range(SIMULATIONS):
+            print 'S#\t' + str(s)
+            nodes = []
+            for n in range(NODES):
+                # parent = n-1 if n-1 > -1 else None
+                node = Node(n)  # , parent)
+                nodes.append(node)
+
             for i in range(ITERATIONS):
                 #print('#\t' + str(i))
 
                 # Sense
                 rand = random.randint(0,NODES-1)
-                sensing_node = get_node(rand)
+                sensing_node = get_node(rand, nodes)
                 cout('Node ' + str(sensing_node.n) + ' is sensing')
 
                 # Get needed nodes
@@ -49,7 +52,7 @@ def main():
                 while current_node is not None:
                     needed_nodes.append(current_node)
                     cout('--Message going to node ' + str(current_node.n) + ' - ' + str(current_node.state))
-                    current_node = get_node(current_node.n-1)
+                    current_node = get_node(current_node.n-1, nodes)
 
                 # Apply rewards or penalties - message
                 last_node = 0 # correct?
@@ -66,14 +69,14 @@ def main():
                         #break
 
                 for n in range(rand+1, NODES):
-                    node = get_node(n)
+                    node = get_node(n, nodes)
                     if node.state == 'AWAKE':
                         node.reward = -5
                     elif node.state == 'SLEEPING':
                         node.reward = 5
 
                 for n in range(0, last_node):
-                    node = get_node(n)
+                    node = get_node(n, nodes)
                     node.reward = 0
 
                 # Apply penalties - battery
@@ -86,19 +89,20 @@ def main():
 
                  # Update probabilities
                 for node in nodes:
-                    self.reward = self.reward /
+                    node.reward = node.reward / 10
                     node.update()
+                    results[s][node.n] = node.probabilities[0]
 
-                print nodes[0].state
-                print nodes[0].probabilities
+            del nodes
 
-    awake_p = []
-    for node in nodes:
-        awake_p.append(node.probabilities[0])
-        print node.probabilities
-
+    awake_p = np.zeros(NODES)
+    for n in range(NODES):
+        for s in range(SIMULATIONS):
+            awake_p[n] += results[s][n]
+        awake_p[n] /= SIMULATIONS
 
     plt.plot(awake_p)
+    print awake_p
     plt.show()
 
 
