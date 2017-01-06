@@ -1,6 +1,7 @@
 from graph import Graph
+import matplotlib.pyplot as plt
 
-SIMULATION_LENGTH = 2
+SIMULATION_LENGTH = 100
 WINDOW_LENGTH = 4
 FRAME_LENGTH = 100
 NODES = 20
@@ -13,9 +14,7 @@ def cout(m):
     if DEBUG:
         print(m)
 
-
 def main():
-
     '''
     First, generate the graph. The routing (assigning hop values) is already done during the graph generation.
     '''
@@ -25,21 +24,19 @@ def main():
 
     cout(['node ' + str(n.n) + ', neighbours: ' + str(len(n.neighbours)) + ', hop:' + str(n.hop) for n in graph.get_nodes()])
 
-    for n in graph.get_nodes():
-        print n.battery.battery
 
     # Processing
     cout('Starting simulation...')
     for w in range(SIMULATION_LENGTH):
-        cout('WINDOW')
+        #cout('WINDOW')
         # Learn
         for n in graph.get_nodes():
             n.learn(t)
 
         for f in range(WINDOW_LENGTH):
 
-            print t
-            cout('FRAME')
+            #print t
+            #cout('FRAME')
             # Schedule sleep
             for n in graph.get_nodes():
                 n.schedule_frame(t)
@@ -48,7 +45,6 @@ def main():
                 # Update nodes
                 for n in graph.get_nodes():
                     n.update(t)
-
                 t += 1
 
             # Compute EE
@@ -58,6 +54,12 @@ def main():
                 # delay?
 
     cout('End of simulation.')
+    for n in graph.get_nodes():
+        #print 'Node ' +  str(n.n) + '\t Last action:' + str(n.current_action)
+        #print n.ESEE_log
+        plt.plot(n.ESEE_log)
+    plt.xlabel('RL')
+    plt.show()
 
 if __name__ == '__main__':
     main()

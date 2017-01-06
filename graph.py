@@ -88,6 +88,8 @@ class Graph:
     def get_nodes(self):
         return self.nodes
 
+
+
     def test(self):
         print(self.get_graph(10, 10**16)) # python rounds up to ~16 decimals, so this is ~ the max discretisation
         print(self.get_graph(50, 10**16))

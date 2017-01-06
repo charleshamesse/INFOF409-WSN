@@ -11,7 +11,7 @@ LEARNING_RATE = 0.28
 MAX_TRIES = 3
 MESSAGE_WEIGHT = 1
 DUTY_CYCLES = np.arange(0,1.1,0.1)
-MODE = 'RAND' # 'RL' #or
+MODE = 'RL'#'RAND' # 'RL' #or
 
 class Node(object):
     def __init__(self, n, x, y):
@@ -28,18 +28,23 @@ class Node(object):
         # Behaviour
         self.state = 'SLEEP'
         self.messages_to_send = 0
-        self.duty_cycle = random.choice(DUTY_CYCLES)
+        self.messages_to_send_log = 0
+        self.current_action = random.randint(0,10)
+        self.duty_cycle = DUTY_CYCLES[self.current_action]
         self.actions = {}
         self.tries = 0
 
         # RL
         self.EE_log = []
+        self.ESEE_log = []
         self.ESEE = None
+        self.probabilities = np.ones(len(DUTY_CYCLES)) / len(DUTY_CYCLES)
 
         self.unsuccessful_transmissions = 0
         self.successful_transmissions = 0
-        self.latency_log = []
-        self.messages_to_send_log = 0
+        self.latency_log = 0 # sum of durations each packets passed in the queue
+        self.idle_listening = 0
+        self.messages_to_send_log_total = 0
         self.awake_log = 0
         self.sleep_log = 0
 
@@ -66,18 +71,56 @@ class Node(object):
         :param t:
         :return:
         '''
+        #        for neighbour in self.neighbours:
+        WINDOW_LENGTH = 4
+        FRAME_LENGTH = 100
+
+        if t > WINDOW_LENGTH*FRAME_LENGTH:
+            # Compute ESEE
+            id = 1 + WINDOW_LENGTH
+            own_EEs = self.EE_log[-id:-1]
+            neighbours_EEs = [n.EE_log[-id:-1] for n in self.neighbours]
+            Ni = len(neighbours_EEs)
+            temp = 0
+            #print neighbours_EEs
+            #print Ni
+            for f in range(WINDOW_LENGTH):
+                temp2 = np.sum([neighbours_EEs[n][f] for n in range(Ni)]) # second sum
+                temp2 += own_EEs[f]
+                temp2 /= Ni + 1
+                temp += temp2
+            ESEE = (1. / WINDOW_LENGTH )* temp
+            #print ESEE
+            self.ESEE_log.append(ESEE)
+
+            # Update probabilities
+            self.probabilities[self.current_action] += LEARNING_RATE * ESEE * (1 -  self.probabilities[self.current_action])
+            for a in range(len(DUTY_CYCLES)):
+                if a != self.current_action:
+                    self.probabilities[a] -= LEARNING_RATE * ESEE * self.probabilities[a]
+
+
         if MODE == 'RAND':
             self.duty_cycle = 0.2 #random.choice(DUTY_CYCLES)
         else: # RL
-            self.duty_cycle = 0 # To-do np.random.choice(3, 1, replace=False, p=[0.1, 0.8, 0.1])
+            self.current_action = np.random.choice(len(DUTY_CYCLES), 1, replace=False, p=self.probabilities)
+            self.duty_cycle = DUTY_CYCLES[self.current_action] # To-do
+
+        if self.is_sink:
+            self.duty_cycle = 1
 
         return True
 
     def schedule_frame(self, t):
         # Flush logs
         # todo
-        self.awake_log =0
-        self.sleep_log =0
+        self.awake_log = 0
+        self.sleep_log = 0
+        self.messages_to_send_log = 0
+        self.latency_log = 0
+        self.successful_transmissions = 0
+        self.unsuccessful_transmissions = 0
+        self.idle_listening = 0
 
         FRAME_LENGTH = 100 # to-do: get it from main
         actions = []
@@ -99,7 +142,7 @@ class Node(object):
 
         # Sensors
         temp = random.randint(0,99)
-        actions.append(Action('SENSE', t + temp, self.add_message))
+        actions.append(Action('SENSE', (t + temp), self.add_message))
 
         # Add actions to node
         for a in actions:
@@ -109,24 +152,31 @@ class Node(object):
                 self.actions[a.time].append(a)
 
 
-
     def compute_ee(self, t):
         '''
         Called at each end of frame
         :param t:
         :return:
         '''
-        IL = 0.23345
-        OH = 0.1
-        UT = 0.254
-        DQ = 0.1
+        IL = self.idle_listening*1. / self.awake_log #0.23345
+        OH = 0.1  #0.1
+        if (self.unsuccessful_transmissions + self.successful_transmissions) > 0:
+            denominator = (self.unsuccessful_transmissions + self.successful_transmissions)
+        else:
+            denominator = 1
+        UT = self.unsuccessful_transmissions*1. / denominator #0.254
+        DQ = self.latency_log*1. / (3*self.messages_to_send_log)  #0.1
         EE = WEIGHTS[0]*(1 - IL) + \
              WEIGHTS[1]*(1 - OH) + \
              WEIGHTS[2]*(1 - UT) + \
              WEIGHTS[3]*(1 - DQ) + \
              WEIGHTS[4]*self.battery.battery
-        print 'Activity log: ' + str(self.awake_log) + 'A / '+  str(self.sleep_log) + 'S'
-        print 'Node ' + str(self.n) + '\tEOF \tBattery=' + str(self.battery.battery)  +'\tEE = ' + str(EE)
+        #print 'Activity log: ' + str(self.awake_log) + 'A / '+  str(self.sleep_log) + 'S'
+        #print 'Node ' + str(self.n) + ':\t' + str(self.messages_to_send_log)
+        #print 'Node ' + str(self.n) + '\tBattery=' + str(self.battery.battery)  +'\tEE = ' + str(EE)
+        #print (IL, OH, UT, DQ)
+
+        self.EE_log.append(EE)
 
     def update(self, t):
         '''
@@ -145,6 +195,8 @@ class Node(object):
         # Check if there are messages to send
         if self.state is 'AWAKE':
             self.awake_log += 1
+            if self.messages_to_send == 0:
+                self.idle_listening += 1
             if self.messages_to_send > 0:
                 self.send_message(t)
         else:
@@ -169,6 +221,7 @@ class Node(object):
     def add_message(self):
         self.messages_to_send += 1
         self.messages_to_send_log += 1
+        self.messages_to_send_log_total += 1
         return True
 
     def send_message(self, t):
@@ -187,8 +240,6 @@ class Node(object):
                             for a in neighbour.actions[t + k]:
                                 if a.name in ['SLEEP']:
                                     temp = True
-                                    print 'Sleeping programmed'
-                                    print (a.describe(), t)
                     if temp == False:
                         neighbour.add_action(Action('WAKE', t + 3, self.stop_sleeping))
 
@@ -203,14 +254,17 @@ class Node(object):
             else:
                 self.messages_to_send -= 1
                 self.tries = 0
-                self.latency_log.append(self.tries)
+                self.latency_log += self.tries
                 self.unsuccessful_transmissions += 1
 
         # There's some node to send the message
         else:
             self.battery.account('RX') # CTS coming back
             receiver = random.choice(awake_neighbours) #random.randint(0, len(awake_neighbours)-1)
-            receiver.messages_to_send += 1
+            if not receiver.is_sink:
+                receiver.messages_to_send += 1
+            receiver.messages_to_send_log += 1
+            receiver.messages_to_send_log_total += 1
 
             # The receiving node pays a CTS emission
             receiver.battery.account('TX')
@@ -230,5 +284,6 @@ class Node(object):
             self.battery.account('RX')
 
             self.messages_to_send -= 1
-            self.latency_log.append(self.tries)
+            self.successful_transmissions += 1
+            self.latency_log += self.tries
             self.tries = 0
