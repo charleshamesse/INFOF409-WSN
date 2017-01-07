@@ -6,8 +6,8 @@ from node import Node
 #
 DEBUG = False
 NODES = 20
-SIMULATIONS = 10
-ITERATIONS = 100
+SIMULATIONS = 40
+ITERATIONS = 200
 DO_SIM = True
 
 #
