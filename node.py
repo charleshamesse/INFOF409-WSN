@@ -12,8 +12,8 @@ WEIGHTS = [0.2, 0.2, 0.2, 0.2, 0.0]
 LEARNING_RATE = 0.2
 MAX_TRIES = 3
 MESSAGE_WEIGHT = 1
-DUTY_CYCLES = np.arange(0,1.1,0.1)
-MODE = 'RL'#'RAND' # 'RL' #or
+DUTY_CYCLES = np.arange(0,0.555555,0.05)
+MODE = 'RAND'#'RAND' # 'RL' #or
 
 class Node(object):
     def __init__(self, n, x, y):
@@ -51,7 +51,6 @@ class Node(object):
         self.successful_transmissions_log_total = 0
         self.awake_log = 0
         self.sleep_log = 0
-
 
         self.IL = []
         self.OH = []
