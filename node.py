@@ -12,8 +12,8 @@ WEIGHTS = [0.2, 0.2, 0.2, 0.2, 0.0]
 LEARNING_RATE = 0.2
 MAX_TRIES = 3
 MESSAGE_WEIGHT = 1
-DUTY_CYCLES = np.arange(0,0.555555,0.05)
-MODE = 'RAND'#'RAND' # 'RL' #or
+DUTY_CYCLES = np.arange(0.25,0.80,0.05)
+MODE = 'RL'#'RAND' # 'RL' #or
 
 class Node(object):
     def __init__(self, n, x, y):
@@ -153,6 +153,7 @@ class Node(object):
             temp = random.randint(0,99)
             actions.append(Action('SENSE', (t + temp), self.add_message))
 
+
         # Add actions to node
         for a in actions:
             if a.time not in self.actions.keys():
@@ -175,8 +176,8 @@ class Node(object):
             denominator = 1
         UT = self.unsuccessful_transmissions*1. / denominator #0.254
         DQ = self.latency_log*1. / (3*self.messages_to_send_log)  #0.1
-        EE = WEIGHTS[0]*(1 - IL) + \
-             WEIGHTS[1]*(1 - OH) + \
+        EE = WEIGHTS[0]*(0.5 - IL) + \
+             WEIGHTS[1]*(0.5 - OH) + \
              WEIGHTS[2]*(1 - UT) + \
              WEIGHTS[3]*(1 - DQ) + \
              WEIGHTS[4]*self.battery.battery
@@ -185,12 +186,12 @@ class Node(object):
         #print 'Node ' + str(self.n) + '\tBattery=' + str(self.battery.battery)  +'\tEE = ' + str(EE)
         #if self.n == 10:
         #    print (IL, OH, UT, DQ), 'Node'+str(self.n)
-        if t%4 == 0:
+        if t%7 == 0:
             self.IL.append(IL)
             self.OH.append(OH)
             self.UT.append(UT)
             self.DQ.append(DQ)
-        if self.n == 0: print ('Node', self.n, 'Time', t, IL, OH, UT, DQ, 'Action', self.current_action)
+        # if self.n == 0: print ('Node', self.n, 'Time', t, IL, OH, UT, DQ, 'Action', self.current_action)
 
         self.EE_log.append(EE)
 
@@ -205,9 +206,12 @@ class Node(object):
 
         # Check if there's an action
         if t in self.actions.keys():
-            for action in self.actions[t]:
-                action.execute()
+            for idx, action in enumerate(self.actions[t]):
+                if self.n ==4:
+                    print 'Executing', idx, action.name
 
+                action.execute()
+        print 'State is ', self.state
         # Check if there are messages to send
         if self.state is 'AWAKE':
             self.awake_log += 1

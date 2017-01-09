@@ -23,9 +23,7 @@ def main():
     graph = Graph(NODES, DISCRETISATION, DEGREE)
     t = 0
 
-    cout(['node ' + str(n.n) + ', neighbours: ' + str(len(n.neighbours)) + ', hop:' + str(n.hop) for n in graph.get_nodes()])
-
-    graph.plot_graph()
+#    graph.plot_graph()
 
     # Processing
     cout('Starting simulation...')
@@ -58,8 +56,8 @@ def main():
     cout('End of simulation.')
 
     for n in graph.get_nodes():
-        print 'Node ' + str(n.n) + ': ' + str(n.successful_transmissions_log_total) + '/' + str(n.messages_to_send_log_total)
-        if n.hop >=4:
+        #print 'Node ' + str(n.n) + ': ' + str(n.successful_transmissions_log_total) + '/' + str(n.messages_to_send_log_total)
+        if n.n ==4:
             for m in n.get_messages():
                     print m.describe()
 
@@ -70,14 +68,22 @@ def main():
         #mean.append(0)
         #plt.plot( np.arange(len(n.probabilities)), [1.0/11]*11)
         for n in graph.get_nodes():
-           plt.subplot(3,1,1)
+           plt.subplot(4,1,1)
            plt.plot(n.ESEE_log)
-           #print n.ESEE_log
-           if n.n %3 == 0:
-               plt.subplot(3,1,2).set_ylim([0, 1])
+           #print n.ESEE_logi
+           acts = []
+           time = []
+           if n.n == 4:
+               plt.subplot(4,1,2).set_ylim([0, 1])
                plt.plot(n.DQ)
-               plt.subplot(3,1,3).set_ylim([0, 1])
+               plt.subplot(4,1,3).set_ylim([0, 1])
                plt.plot(n.IL)
+               for a in n.actions.iterkeys():
+                    acts = n.actions[a]
+                    for act in acts:
+                        #print len(acts), act.time, act.name
+                        break
+
     plt.xlabel('RL _')
     plt.show()
 
